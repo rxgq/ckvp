@@ -67,7 +67,46 @@ Kvp *init_kvp() {
     return kvp;
 }
 
+void assert_equal(int n1, int n2) {
+    if (n1 != n2) {
+        printf("Assertion failed: %d == %d", n1, n2);
+    }
+}
+
+void test_retrieve() {
+    Kvp *kvp = init_kvp();
+
+    insert(kvp, 1024, 10);
+    int n = retrieve(kvp, 1024);
+
+    assert_equal(n, 10);
+}
+
+void test_retrieve_update() {
+    Kvp *kvp = init_kvp();
+
+    insert(kvp, 1024, 10);
+    insert(kvp, 1024, 4);
+    int n = retrieve(kvp, 1024);
+
+    assert_equal(n, 4);
+}
+
+void test_delete() {
+    Kvp *kvp = init_kvp();
+
+    insert(kvp, 1024, 10);
+    delete(kvp, 1024);
+
+    int n = retrieve(kvp, 1024);
+
+    assert_equal(n, -1);
+}
+
 int main(int argc, char *argv[]) {
+    test_retrieve();
+    test_retrieve_update();
+    test_delete();
 
     return 0;
 }
