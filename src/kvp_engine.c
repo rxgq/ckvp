@@ -120,12 +120,12 @@ static void exec_help(KvpEngine *kvp_engine) {
     printf("del <key>\n");
     printf("  - Deletes the specified key-value pair from the store.\n");
 
-    printf("quit\n");
+    printf("quit / q\n");
     printf("  - Exits the program.\n");
 
     printf("\nNotes:\n");
     printf("- Keys and values should be strings.\n");
-    printf("- All changes are persistent across sessions, saved to a file.\n");
+    printf("- All changes are persistent acrsoss sessions, saved to a file.\n");
     printf("--------------------------------\n");
 
     advance(kvp_engine);

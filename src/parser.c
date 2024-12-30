@@ -44,7 +44,7 @@ static void create_symbol(Parser *parser, char *lexeme) {
 static void parse_identifier(Parser *parser) {
     int start = parser->current;
 
-    while (current_char(parser) != '\0' && isalpha(current_char(parser))) {
+    while (current_char(parser) != '\0' && (isalnum(current_char(parser)) || current_char(parser) == '_')) {
         advance(parser);
     }
 
