@@ -12,6 +12,12 @@ int main(int argc, char *argv[]) {
 
     KvpStore *store = init_kvp_store();
 
+    if (load_from_file(store, "store.dat") == 1) {
+        save_to_file(store, "store.dat");
+    }
+
+    load_from_file(store, "store.dat");
+
     while (1) {
         char input[256];
         printf("\n\n> ");

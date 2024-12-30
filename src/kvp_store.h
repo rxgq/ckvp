@@ -2,8 +2,8 @@
 #define KVPSTORE_H
 
 typedef struct Kvp {
-    int key;
-    int val;
+    char key[256];
+    char val[1024];
 } Kvp;
 
 typedef struct KvpStore {
@@ -12,9 +12,10 @@ typedef struct KvpStore {
     Kvp *kvps;
 } KvpStore;
 
-extern void insert(KvpStore *store, int key, int val);
-extern int retrieve(KvpStore *store, int key);
-extern void delete_kvp(KvpStore *store, int key);
+extern void insert(KvpStore *store, char *key, char * val);
+extern char* retrieve(KvpStore *store, char * key);
+extern void delete_kvp(KvpStore *store, char * key);
 extern KvpStore *init_kvp_store();
+extern unsigned int hash(KvpStore *store, const char* key);
 
 #endif

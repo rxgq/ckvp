@@ -6,8 +6,6 @@
 #include "parser.h"
 #include "kvp_store.h"
 
-const char *TEMP_PATH = "C:\\Users\\rxgqq\\projects\\allium\\store\\store.txt";
-
 KvpEngine *init_kvp_engine(Symbol *symbols) {
     KvpEngine *kvp_engine = (KvpEngine *)malloc(sizeof(KvpEngine));
 
@@ -42,48 +40,26 @@ static Symbol current_symbol(KvpEngine *kvp_engine) {
     return kvp_engine->symbols[kvp_engine->current];
 }
 
-static void write_kvp(const char *key, const char *val) {
-    FILE *fptr = fopen(TEMP_PATH, "a");
+void save_to_file(KvpStore *kvStore, const char *filename) {
+    FILE *file = fopen(filename, "wb");
 
-    fwrite(key, 1, strlen(key), fptr);
-    fwrite(":", 1, 1, fptr);
-    fwrite(val, 1, strlen(val), fptr);
-    fwrite("\n", 1, 1, fptr);
-    fclose(fptr);
+    fwrite(&kvStore->count, sizeof(int), 1, file);
+    fwrite(kvStore->kvps, sizeof(Kvp), 100, file);
+
+    fclose(file);
 }
 
-static char* read_kvp(const char *key) {
-    FILE *fptr = fopen(TEMP_PATH, "r");
-
-    fseek(fptr, 0, SEEK_END);
-    long sz = ftell(fptr);
-    rewind(fptr);
-
-    char *buff = (char *)malloc(sz + 1);
-
-    fread(buff, 1, sz, fptr);
-    buff[sz] = '\0';
-    fclose(fptr);
-
-    char *line = strtok(buff, "\n");
-    while (line != NULL) {
-        char *separator = strchr(line, ':');
-        if (separator == NULL) break;
-
-        *separator = '\0';
-        char *file_key = line;
-        char *file_val = separator + 1;
-
-        if (strcmp(key, file_key) == 0) {
-            free(buff);
-            return strdup(file_val);
-        }
-
-        line = strtok(NULL, "\n");
+int load_from_file(KvpStore *kvStore, const char *filename) {
+    FILE *file = fopen(filename, "rb");
+    if (!file) {
+        return 1;
     }
 
-    free(buff);
-    return NULL;
+    fread(&kvStore->count, sizeof(int), 1, file);
+    fread(kvStore->kvps, sizeof(Kvp), 100, file);
+
+    fclose(file);
+    return 0;
 }
 
 static void exec_set(KvpStore *store, KvpEngine *kvp_engine) {
@@ -103,11 +79,11 @@ static void exec_set(KvpStore *store, KvpEngine *kvp_engine) {
     }
     advance(kvp_engine);
 
-    write_kvp(key.lexeme, val.lexeme);
+    insert(store, key.lexeme, val.lexeme);
 }
 
 
-static void exec_get(KvpStore*store, KvpEngine *kvp_engine) {
+static void exec_get(KvpStore *store, KvpEngine *kvp_engine) {
     expect(kvp_engine, "get");
 
     Symbol key = current_symbol(kvp_engine);
@@ -117,13 +93,7 @@ static void exec_get(KvpStore*store, KvpEngine *kvp_engine) {
     }
     advance(kvp_engine);
 
-    char *val = read_kvp(key.lexeme);
-
-    if (val == NULL) {
-        printf("key '%s' not found", key.lexeme);
-    } else {
-        printf("Val: %s", val);
-    }
+    retrieve(store, key.lexeme);
 }
 
 static void exec_del(KvpStore*store, KvpEngine *kvp_engine) {
@@ -149,10 +119,13 @@ static void exec_symbol(KvpStore *store, KvpEngine *kvp_engine) {
     }
 }
 
+
 void execute(KvpStore *store, Symbol *symbols) {
     KvpEngine *kvp_engine = init_kvp_engine(symbols);
 
     while (symbols[kvp_engine->current].lexeme != NULL) {
         exec_symbol(store, kvp_engine);
     }
+
+    save_to_file(store, "store.dat");
 }

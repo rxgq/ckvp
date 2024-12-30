@@ -1,68 +1,78 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "kvp_store.h"
 
-#define INITIAL_TABLE_SIZE 1024
-#define EMPTY_KEY -1
-#define DELETED_KEY -2
+#define MAX_KEY_LEN 256
+#define MAX_VALUE_LEN 1024
+#define STORE_SIZE 100
 
-static inline unsigned int hash(KvpStore *store, int key) {
-    return key % store->capacity;
-}
+#define INITIAL_TABLE_SIZE 1000
 
-void insert(KvpStore* store, int key, int val) {
-    if (key == EMPTY_KEY || key == DELETED_KEY) {
-        return;
+unsigned int hash(KvpStore *store, const char* key) {
+    unsigned int hash_value = 0;
+    while (*key) {
+        hash_value = (hash_value * 31) + *key++;
     }
 
-    if (store->count == store->capacity) {
+    return hash_value % STORE_SIZE;
+}
+
+void insert(KvpStore* store, char *key, char *val) {
+    if (store->count >= store->capacity) {
+        printf("Kvp Store is full.\n");
         return;
     }
     
     unsigned int index = hash(store, key);
 
-    while (store->kvps[index].key != EMPTY_KEY && store->kvps[index].key != DELETED_KEY) {
-        if (store->kvps[index].key == key) {
-            store->kvps[index].val = val;
+    while (store->kvps[index].key[0] != '\0') {
+        if (strcmp(store->kvps[index].key, key) == 0) {
+            strncpy(store->kvps[index].val, val, MAX_VALUE_LEN);
+            store->kvps[index].val[MAX_VALUE_LEN - 1] = '\0';
+            printf("Updated value for key: %s\n", key);
             return;
         }
 
-        index = hash(store, index + 1);
+        index = (index + 1) % STORE_SIZE;
     }
 
-    store->kvps[index].key = key;
-    store->kvps[index].val = val;
+    strncpy(store->kvps[index].key, key, MAX_KEY_LEN);
+    store->kvps[index].key[MAX_KEY_LEN - 1] = '\0';
+    strncpy(store->kvps[index].val, val, MAX_VALUE_LEN);
+    store->kvps[index].val[MAX_VALUE_LEN - 1] = '\0';
 
     store->count++;
+    printf("Inserted key: %s, value: %s\n", key, val);
 }
 
-int retrieve(KvpStore* store, int key) {
-    if (key < 0) return -1;
-
+char *retrieve(KvpStore* store, char *key) {
     unsigned int index = hash(store, key);
 
-    while (store->kvps[index].key != EMPTY_KEY) {
-        if (store->kvps[index].key == key) {
+    while (store->kvps[index].key[0] != '\0') {
+        if (strcmp(store->kvps[index].key, key) == 0) {
+            printf("Retrieved: %s", store->kvps[index].val);
             return store->kvps[index].val;
         }
 
-        index = hash(store, index + 1);
+        index = (index + 1) % STORE_SIZE;
     }
 
-    return -1;
+    return NULL;
 }
 
-void delete_kvp(KvpStore *store, int key) {
+void delete_kvp(KvpStore *store, char *key) {
     unsigned int index = hash(store, key);
 
-    while (store->kvps[index].key != EMPTY_KEY) {
+    while (store->kvps[index].key > 0) {
         if (store->kvps[index].key == key) {
-            store->kvps[index].key = DELETED_KEY;
+            memset(&store->kvps[index], 0, sizeof(Kvp));
             store->count--;
+            return;
         }
 
-        index = hash(store, index + 1);
+        index = (index + 1) % STORE_SIZE;
     }
 }
 
@@ -73,9 +83,6 @@ static Kvp *init_kvp() {
         exit(1);
     }
     
-    for (int i = 0; i < INITIAL_TABLE_SIZE; i++) {
-        kvp[i].key = EMPTY_KEY;
-    }
     return kvp;
 }
 
