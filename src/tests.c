@@ -1,5 +1,8 @@
 #include <stdio.h>
+#include <string.h>
+
 #include "kvp_store.h"
+#include "parser.h"
 
 int test_passed = 0;
 int test_failed = 0;
@@ -7,6 +10,15 @@ int test_failed = 0;
 void assert_equal(int n1, int n2, const char *test_name) {
     if (n1 != n2) {
         printf("Test '%s' failed: Expected %d, but got %d\n", test_name, n2, n1);
+        test_failed++;
+    } else {
+        test_passed++;
+    }
+}
+
+void str_assert_equal(char *str1, char *str2, char*test_name) {
+    if (strcmp(str1, str2) == 1) {
+        printf("Test '%s' failed: Expected %s, but got %s\n", test_name, str2, str1);
         test_failed++;
     } else {
         test_passed++;
@@ -90,6 +102,24 @@ void test_reinsert_after_delete() {
     assert_equal(n, 20, "test_reinsert_after_delete");
 }
 
+void test_parser_input() {
+    char *source = "set x 10";
+    Symbol* symbols = parse_symbols(source);
+
+    str_assert_equal("set", symbols[0].lexeme, "test_parser_input");
+    str_assert_equal("x", symbols[1].lexeme, "test_parser_input");
+    str_assert_equal("10", symbols[2].lexeme, "test_parser_input");
+}
+
+void test_parser_input_whitespace() {
+    char *source = "    set                  x    10";
+    Symbol* symbols = parse_symbols(source);
+
+    str_assert_equal("set", symbols[0].lexeme, "test_parser_input");
+    str_assert_equal("x", symbols[1].lexeme, "test_parser_input");
+    str_assert_equal("10", symbols[2].lexeme, "test_parser_input");
+}
+
 void run_tests() {
     test_retrieve();
     test_retrieve_update();
@@ -101,12 +131,15 @@ void run_tests() {
     test_hash_table_max_capacity();
     test_reinsert_after_delete();
 
+    test_parser_input();
+    test_parser_input_whitespace();
+
     printf("\nTest Results:\n");
-    printf("Tests Passed: %d\n", test_passed);
-    printf("Tests Failed: %d\n", test_failed);
+    printf("  Passed: %d\n", test_passed);
+    printf("  Failed: %d\n\n", test_failed);
 
     if (test_failed == 0) {
-        printf("All tests passed!\n");
+        printf("All tests passed.\n");
     } else {
         printf("Some tests failed. Please check the output above.\n");
     }
