@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include "src/kvp_store.h"
-#include "src/tests.h"
+#include "src/kvp_tests.h"
 #include "src/parser.h"
 #include "src/kvp_engine.h"
 

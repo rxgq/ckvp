@@ -31,7 +31,6 @@ void insert(KvpStore* store, char *key, char *val) {
         if (strcmp(store->kvps[index].key, key) == 0) {
             strncpy(store->kvps[index].val, val, MAX_VALUE_LEN);
             store->kvps[index].val[MAX_VALUE_LEN - 1] = '\0';
-            printf("Updated value for key: %s\n", key);
             return;
         }
 
@@ -44,7 +43,6 @@ void insert(KvpStore* store, char *key, char *val) {
     store->kvps[index].val[MAX_VALUE_LEN - 1] = '\0';
 
     store->count++;
-    printf("Inserted key: %s, value: %s\n", key, val);
 }
 
 char *retrieve(KvpStore* store, char *key) {
@@ -52,7 +50,6 @@ char *retrieve(KvpStore* store, char *key) {
 
     while (store->kvps[index].key[0] != '\0') {
         if (strcmp(store->kvps[index].key, key) == 0) {
-            printf("Retrieved: %s", store->kvps[index].val);
             return store->kvps[index].val;
         }
 
@@ -65,16 +62,17 @@ char *retrieve(KvpStore* store, char *key) {
 void delete_kvp(KvpStore *store, char *key) {
     unsigned int index = hash(store, key);
 
-    while (store->kvps[index].key > 0) {
-        if (store->kvps[index].key == key) {
+    while (store->kvps[index].key[0] != '\0') {
+        if (strcmp(store->kvps[index].key, key) == 0) {
             memset(&store->kvps[index], 0, sizeof(Kvp));
             store->count--;
             return;
         }
 
-        index = (index + 1) % STORE_SIZE;
+        index = (index + 1) % store->capacity;
     }
 }
+
 
 static Kvp *init_kvp() {
     Kvp *kvp = (Kvp *)malloc(sizeof(Kvp) * INITIAL_TABLE_SIZE);

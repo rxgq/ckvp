@@ -6,22 +6,6 @@
 #include "parser.h"
 #include "kvp_store.h"
 
-KvpEngine *init_kvp_engine(Symbol *symbols) {
-    KvpEngine *kvp_engine = (KvpEngine *)malloc(sizeof(KvpEngine));
-
-    int symbol_count = 0;
-    while (symbols[symbol_count].lexeme != NULL) {
-        symbol_count++;
-    }
-    kvp_engine->symbols = (Symbol *)malloc(sizeof(Symbol) * symbol_count);
-    kvp_engine->symbols = symbols;
-
-    kvp_engine->symbol_count = symbol_count;
-    kvp_engine->current = 0;
-
-    return kvp_engine;
-}
-
 static void expect(KvpEngine *kvp_engine, char *expected) {
     char* actual = kvp_engine->symbols[kvp_engine->current].lexeme;
 
@@ -80,6 +64,7 @@ static void exec_set(KvpStore *store, KvpEngine *kvp_engine) {
     advance(kvp_engine);
 
     insert(store, key.lexeme, val.lexeme);
+    printf("inserted %s: %s", key.lexeme, val.lexeme);
 }
 
 
@@ -93,12 +78,22 @@ static void exec_get(KvpStore *store, KvpEngine *kvp_engine) {
     }
     advance(kvp_engine);
 
-    retrieve(store, key.lexeme);
+    char *val = retrieve(store, key.lexeme);
+    printf("retrieved %s", val);
 }
 
 static void exec_del(KvpStore*store, KvpEngine *kvp_engine) {
     expect(kvp_engine, "del");
 
+    Symbol key = current_symbol(kvp_engine);
+    if (key.lexeme == NULL) {
+        printf("expected key after 'del'");
+        return;
+    }
+    advance(kvp_engine);
+
+    delete_kvp(store, key.lexeme);
+    printf("deleted key: %s", key.lexeme);
 }
 
 static void exec_symbol(KvpStore *store, KvpEngine *kvp_engine) {
@@ -119,6 +114,21 @@ static void exec_symbol(KvpStore *store, KvpEngine *kvp_engine) {
     }
 }
 
+static KvpEngine *init_kvp_engine(Symbol *symbols) {
+    KvpEngine *kvp_engine = (KvpEngine *)malloc(sizeof(KvpEngine));
+
+    int symbol_count = 0;
+    while (symbols[symbol_count].lexeme != NULL) {
+        symbol_count++;
+    }
+    kvp_engine->symbols = (Symbol *)malloc(sizeof(Symbol) * symbol_count);
+    kvp_engine->symbols = symbols;
+
+    kvp_engine->symbol_count = symbol_count;
+    kvp_engine->current = 0;
+
+    return kvp_engine;
+}
 
 void execute(KvpStore *store, Symbol *symbols) {
     KvpEngine *kvp_engine = init_kvp_engine(symbols);
