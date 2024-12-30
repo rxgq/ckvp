@@ -10,6 +10,7 @@ typedef struct KvpStore {
     int capacity;
     int count;
     Kvp *kvps;
+    char *pass;
 } KvpStore;
 
 extern void insert(KvpStore *store, char *key, char * val);

@@ -33,6 +33,7 @@ void save_to_file(KvpStore *kvStore, const char *filename) {
 
     fwrite(&kvStore->count, sizeof(int), 1, file);
     fwrite(kvStore->kvps, sizeof(Kvp), 100, file);
+    fwrite(kvStore->pass, sizeof(char), 64, file);
 
     fclose(file);
 }
@@ -45,6 +46,7 @@ int load_from_file(KvpStore *kvStore, const char *filename) {
 
     fread(&kvStore->count, sizeof(int), 1, file);
     fread(kvStore->kvps, sizeof(Kvp), 100, file);
+    fread(kvStore->pass, sizeof(char), 64, file);
 
     fclose(file);
     return 1;

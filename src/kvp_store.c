@@ -94,6 +94,8 @@ KvpStore *init_kvp_store() {
     store->kvps = init_kvp();
     store->capacity = INITIAL_TABLE_SIZE;
     store->count = 0;
+    store->pass = (char *)malloc(64);
+    store->pass[0] = '\0';
 
     return store;
 }

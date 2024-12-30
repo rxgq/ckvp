@@ -55,6 +55,42 @@ int create_allium_dir() {
     return 1;
 }
 
+int get_input(char *buffer, size_t buffer_size, const char *prompt) {
+    printf("%s", prompt);
+    if (fgets(buffer, buffer_size, stdin) == NULL) {
+        printf("\nInput error.\n");
+        return -1;
+    }
+    buffer[strcspn(buffer, "\n")] = '\0';
+    return 0;
+}
+
+void setup_auth(KvpStore *store) {
+    printf("\n");
+    while (1) {
+        char password[64];
+        char password_confirmation[64];
+
+        if (get_input(password, sizeof(password), "password: ") != 0) {
+            return;
+        }
+        if (strcmp(password, "") == 0) continue;
+
+        if (get_input(password_confirmation, sizeof(password_confirmation), "confirm password: ") != 0) {
+            return;
+        }
+
+        if (strcmp(password, password_confirmation) != 0) {
+            printf("\n  Passwords did not match.\n\n");
+            continue;
+        }
+
+        printf("\n  Password successfully set.\n");
+        store->pass = strdup(password);
+        break;
+    }
+}
+
 int main(int argc, char *argv[]) {
     // run_tests();
 
@@ -80,12 +116,32 @@ int main(int argc, char *argv[]) {
         save_to_file(store, full_path);
         printf("\n  created allium.dat");
     } else {
+        printf("\ninitialising allium\n");
         printf("\n  found allium.dat");
         load_from_file(store, full_path);
         printf("\n  successfully loaded contents from allium.dat");
     }
 
-    printf("\n\n\nallium console (type \"help\")");
+    if (strcmp(store->pass, "") == 0) {
+        if (get_choice("  \ncreate authorisation password? (recommended)")) {
+            setup_auth(store);
+            save_to_file(store, full_path);
+        }
+    }
+    
+    if (strcmp(store->pass, "") != 0) {
+        printf("\n\n");
+        while (1) {
+            char input[64];
+            get_input(input, 64, "password: ");
+
+            if (strcmp(input, store->pass) == 0) {
+                break;
+            }
+        }
+    }
+
+    printf("\n\nallium console (type \"help\")");
     while (1) {
         char input[256];
         printf("\n> ");
