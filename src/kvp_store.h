@@ -18,5 +18,6 @@ extern char* retrieve(KvpStore *store, char * key);
 extern void delete_kvp(KvpStore *store, char * key);
 extern KvpStore *init_kvp_store();
 extern unsigned int hash(KvpStore *store, const char* key);
+extern Kvp *get_all(KvpStore *store, int *count);
 
 #endif

@@ -8,8 +8,6 @@
 #define MAX_VALUE_LEN 1024
 #define STORE_SIZE 100
 
-#define INITIAL_TABLE_SIZE 1000
-
 unsigned int hash(KvpStore *store, const char* key) {
     unsigned int hash_value = 0;
     while (*key) {
@@ -73,9 +71,31 @@ void delete_kvp(KvpStore *store, char *key) {
     }
 }
 
+Kvp *get_all(KvpStore *store, int *count) {
+    Kvp *all_kvps = (Kvp *)malloc(sizeof(Kvp) * store->count);
+    if (!all_kvps) {
+        printf("Memory allocation failed for all key-value pairs.\n");
+        exit(1);
+    }
+
+    int index = 0;
+    for (int i = 0; i < STORE_SIZE; i++) {
+        if (store->kvps[i].key[0] != '\0') {
+            strncpy(all_kvps[index].key, store->kvps[i].key, MAX_KEY_LEN);
+            strncpy(all_kvps[index].val, store->kvps[i].val, MAX_VALUE_LEN);
+            index++;
+        }
+    }
+
+    *count = index;
+
+    return all_kvps;
+}
+
+
 
 static Kvp *init_kvp() {
-    Kvp *kvp = (Kvp *)malloc(sizeof(Kvp) * INITIAL_TABLE_SIZE);
+    Kvp *kvp = (Kvp *)malloc(sizeof(Kvp) * STORE_SIZE);
     if (!kvp) {
         printf("Memory allocation failed for kvp\n");
         exit(1);
@@ -92,7 +112,7 @@ KvpStore *init_kvp_store() {
     }
 
     store->kvps = init_kvp();
-    store->capacity = INITIAL_TABLE_SIZE;
+    store->capacity = STORE_SIZE;
     store->count = 0;
     store->pass = (char *)malloc(64);
     store->pass[0] = '\0';
