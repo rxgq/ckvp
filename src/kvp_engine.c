@@ -26,6 +26,10 @@ static Symbol current_symbol(KvpEngine *kvp_engine) {
 
 void save_to_file(KvpStore *kvStore, const char *filename) {
     FILE *file = fopen(filename, "wb");
+    if (!file) {
+        perror("\nError saving Kvp");
+        file = fopen(filename, "w");
+    }
 
     fwrite(&kvStore->count, sizeof(int), 1, file);
     fwrite(kvStore->kvps, sizeof(Kvp), 100, file);
@@ -36,14 +40,14 @@ void save_to_file(KvpStore *kvStore, const char *filename) {
 int load_from_file(KvpStore *kvStore, const char *filename) {
     FILE *file = fopen(filename, "rb");
     if (!file) {
-        return 1;
+        return 0;
     }
 
     fread(&kvStore->count, sizeof(int), 1, file);
     fread(kvStore->kvps, sizeof(Kvp), 100, file);
 
     fclose(file);
-    return 0;
+    return 1;
 }
 
 static void exec_set(KvpStore *store, KvpEngine *kvp_engine) {
@@ -64,7 +68,7 @@ static void exec_set(KvpStore *store, KvpEngine *kvp_engine) {
     advance(kvp_engine);
 
     insert(store, key.lexeme, val.lexeme);
-    printf("inserted %s: %s", key.lexeme, val.lexeme);
+    printf("inserted key %s: %s", key.lexeme, val.lexeme);
 }
 
 
@@ -79,7 +83,7 @@ static void exec_get(KvpStore *store, KvpEngine *kvp_engine) {
     advance(kvp_engine);
 
     char *val = retrieve(store, key.lexeme);
-    printf("retrieved %s", val);
+    printf("retrieved value: %s", val);
 }
 
 static void exec_del(KvpStore*store, KvpEngine *kvp_engine) {
@@ -92,8 +96,37 @@ static void exec_del(KvpStore*store, KvpEngine *kvp_engine) {
     }
     advance(kvp_engine);
 
+    char *val = retrieve(store, key.lexeme);
+    if (val == NULL) {
+        printf("key not found: %s", key.lexeme);
+        return;
+    }
+
     delete_kvp(store, key.lexeme);
     printf("deleted key: %s", key.lexeme);
+}
+
+static void exec_help(KvpEngine *kvp_engine) {
+    printf("\nAvailable Commands:\n");
+    printf("--------------------------------\n");
+    printf("set <key> <value>\n");
+    printf("  - Inserts a new key-value pair or updates an existing key with the specified value.\n");
+
+    printf("get <key>\n");
+    printf("  - Retrieves the value associated with the specified key.\n");
+
+    printf("del <key>\n");
+    printf("  - Deletes the specified key-value pair from the store.\n");
+
+    printf("quit\n");
+    printf("  - Exits the program.\n");
+
+    printf("\nNotes:\n");
+    printf("- Keys and values should be strings.\n");
+    printf("- All changes are persistent across sessions, saved to a file.\n");
+    printf("--------------------------------\n");
+
+    advance(kvp_engine);
 }
 
 static void exec_symbol(KvpStore *store, KvpEngine *kvp_engine) {
@@ -107,6 +140,9 @@ static void exec_symbol(KvpStore *store, KvpEngine *kvp_engine) {
     }
     else if (strcmp(curr.lexeme, "del") == 0 ) {
         exec_del(store, kvp_engine);
+    }
+    else if (strcmp(curr.lexeme, "help") == 0) {
+        exec_help(kvp_engine);
     }
     else {
         printf("Unknown command: %s", curr.lexeme);
@@ -136,6 +172,4 @@ void execute(KvpStore *store, Symbol *symbols) {
     while (symbols[kvp_engine->current].lexeme != NULL) {
         exec_symbol(store, kvp_engine);
     }
-
-    save_to_file(store, "store.dat");
 }
