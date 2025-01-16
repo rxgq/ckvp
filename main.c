@@ -8,8 +8,8 @@
 #include "src/parser.h"
 #include "src/kvp_engine.h"
 
-const char *ALLIUM_PATH = "C:\\Users\\rxgqq\\projects\\allium\\allium";
-const char *ALLIUM_FILE = "allium.dat";
+const char *CKVP_PATH = "C:\\Users\\adunderdale\\Projects\\persona\\lckvp\\data";
+const char *CKVP_FILE = "ckvp.dat";
 
 int get_choice(const char *message) {
     char input[64];
@@ -34,18 +34,18 @@ int get_choice(const char *message) {
 }
 
 char *get_full_path() {
-    size_t path_len = strlen(ALLIUM_PATH);
-    size_t file_len = strlen(ALLIUM_FILE);
+    size_t path_len = strlen(CKVP_PATH);
+    size_t file_len = strlen(CKVP_FILE);
 
     char *full_path = (char *)malloc(path_len + file_len + 2);
 
-    snprintf(full_path, path_len + file_len + 2, "%s\\%s", ALLIUM_PATH, ALLIUM_FILE);
+    snprintf(full_path, path_len + file_len + 2, "%s\\%s", CKVP_PATH, CKVP_FILE);
 
     return full_path;
 }
 
-int create_allium_dir() {
-    if (_mkdir(ALLIUM_PATH) != 0) {
+int create_ckvp_dir() {
+    if (_mkdir(CKVP_PATH) != 0) {
         if (errno != EEXIST) {
             perror("Error creating directory");
             return 0;
@@ -99,27 +99,27 @@ int main(int argc, char *argv[]) {
 
     FILE *fptr = fopen(full_path, "r");
     if (!fptr) {
-        printf("\nAllium KVP setup required");
+        printf("\nC KVP setup required");
 
         if (!get_choice("  perform setup?")) {
-            printf("\ndid not proceed with allium setup");
+            printf("\ndid not proceed with ckvp setup");
             fclose(fptr);
             return 0;
         }
 
-        create_allium_dir();
+        create_ckvp_dir();
     }
     fclose(fptr);
 
     if (!load_from_file(store, full_path)) {
-        printf("\n  allium.dat does not exist");
+        printf("\n  ckvp.dat does not exist");
         save_to_file(store, full_path);
-        printf("\n  created allium.dat");
+        printf("\n  created ckvp.dat");
     } else {
-        printf("\ninitialising allium\n");
-        printf("\n  found allium.dat");
+        printf("\ninitialising ckvp\n");
+        printf("\n  found ckvp.dat");
         load_from_file(store, full_path);
-        printf("\n  successfully loaded contents from allium.dat");
+        printf("\n  successfully loaded contents from ckvp.dat");
     }
 
     if (strcmp(store->pass, "") == 0) {
@@ -141,7 +141,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    printf("\n\nallium console (type \"help\")");
+    printf("\n\nckvp console (type \"help\")");
     while (1) {
         char input[256];
         printf("\n> ");
