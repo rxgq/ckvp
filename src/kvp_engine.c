@@ -108,19 +108,6 @@ static void exec_del(KvpStore *store, KvpEngine *kvp_engine) {
     printf("%s", key.lexeme);
 }
 
-static void exec_get_all(KvpStore *store, KvpEngine *kvp_engine) {
-    expect(kvp_engine, "getall");
-
-    int count = 0;
-    Kvp* kvps = get_all(store, &count);
-
-    for (int i = 0; i < count; i++) {
-        printf("%s ", kvps[i].key);
-        printf("%s", kvps[i].val);
-        if (i != count - 1) printf("\n");
-    }
-}
-
 static void exec_help(KvpEngine *kvp_engine) {
     printf("\nAvailable Commands:\n");
     printf("--------------------------------\n");
@@ -158,9 +145,6 @@ static void exec_symbol(KvpStore *store, KvpEngine *kvp_engine) {
     }
     else if (strcmp(curr.lexeme, "help") == 0) {
         exec_help(kvp_engine);
-    }
-    else if (strcmp(curr.lexeme, "getall") == 0) {
-        exec_get_all(store, kvp_engine);
     }
     else {
         printf("Unknown command: %s", curr.lexeme);

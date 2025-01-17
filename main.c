@@ -2,13 +2,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <direct.h> 
+#include <windows.h>
 
 #include "src/kvp_store.h"
 #include "src/kvp_tests.h"
 #include "src/parser.h"
 #include "src/kvp_engine.h"
 
-const char *CKVP_PATH = "C:\\Users\\adunderdale\\Projects\\persona\\lckvp\\data";
 const char *CKVP_FILE = "ckvp.dat";
 
 int get_choice(const char *message) {
@@ -33,21 +33,47 @@ int get_choice(const char *message) {
     }
 }
 
-char *get_full_path() {
-    size_t path_len = strlen(CKVP_PATH);
-    size_t file_len = strlen(CKVP_FILE);
+char *get_base_path() {
+    char *home_dir;
+    char *default_path;
+
+#ifdef _WIN32
+    home_dir = getenv("USERPROFILE");
+    if (!home_dir) {
+        fprintf(stderr, "error setting up kvp store path: USERPROFILE environment variable not found.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    default_path = malloc(strlen(home_dir) + strlen("\\AppData\\Local\\ckvp") + 1);
+    sprintf(default_path, "%s\\AppData\\Local\\ckvp", home_dir);
+#else
+    home_dir = getenv("HOME");
+    if (!home_dir) {
+        fprintf(stderr, "error setting up kvp store path: HOME environment variable not found.\n");
+        exit(EXIT_FAILURE);
+    }
+    default_path = malloc(strlen(home_dir) + strlen("/.config/ckvp") + 1);
+    sprintf(default_path, "%s/.config/ckvp", home_dir);
+#endif
+
+    return default_path;
+}
+
+char *get_full_path(char *base_path, const char *filename) {
+    size_t path_len = strlen(base_path);
+    size_t file_len = strlen(filename);
 
     char *full_path = (char *)malloc(path_len + file_len + 2);
-
-    snprintf(full_path, path_len + file_len + 2, "%s\\%s", CKVP_PATH, CKVP_FILE);
+    snprintf(full_path, path_len + file_len + 2, "%s\\%s", base_path, filename);
 
     return full_path;
 }
 
-int create_ckvp_dir() {
-    if (_mkdir(CKVP_PATH) != 0) {
+int create_ckvp_dir(char *path) {
+    if (_mkdir(path) != 0) {
         if (errno != EEXIST) {
-            perror("Error creating directory");
+            perror("Error creating directory: ");
+            printf("%s", path);
             return 0;
         }
     }
@@ -94,7 +120,17 @@ void setup_auth(KvpStore *store) {
 int main(int argc, char *argv[]) {
     // run_tests();
 
-    char *full_path = get_full_path();
+    char *base_path = get_base_path();
+    char *full_path = get_full_path(base_path, CKVP_FILE);
+
+    printf("ckvp path: %s\n", full_path);
+
+    if (!create_ckvp_dir(base_path)) {
+        free(base_path);
+        free(full_path);
+        return 0;
+    }
+
     KvpStore *store = init_kvp_store();
 
     FILE *fptr = fopen(full_path, "r");
@@ -106,13 +142,11 @@ int main(int argc, char *argv[]) {
             fclose(fptr);
             return 0;
         }
-
-        create_ckvp_dir();
     }
     fclose(fptr);
 
     if (!load_from_file(store, full_path)) {
-        printf("\n  ckvp.dat does not exist");
+        printf("\n  ckvp.dat does not already exist");
         save_to_file(store, full_path);
         printf("\n  created ckvp.dat");
     } else {
